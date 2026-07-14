@@ -47,7 +47,7 @@ def main():
     hotkey.start()
 
     print(f"[ClipCache] v{VERSION} running in system tray. Press Ctrl+Shift+V to open.")
-    print("[ClipCache] Pin items with 📌, click to copy, search to find.")
+    print("[ClipCache] Pin items with the pin button, click to copy, search to find.")
 
     try:
         ui.run()
