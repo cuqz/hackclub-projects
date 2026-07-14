@@ -1,0 +1,6 @@
+{
+    "wifi_ssid": "your wifi network name",
+    "wifi_pass": "your wifi password",
+    "github_user": "cuqz",
+    "update_interval": 3600
+}

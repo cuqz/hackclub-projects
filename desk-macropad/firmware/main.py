@@ -140,7 +140,7 @@ def main():
         show_message(epd, ["github api error", "will retry later"])
         epd.sleep()
 
-    # go to sleep, wake up every hour to refresh
+    # update every hour
     while True:
         utime.sleep(UPDATE_INTERVAL)
         epd.init(0)
@@ -149,7 +149,5 @@ def main():
             if svg:
                 draw_graph(epd, svg)
                 blink(1)
-        utime.sleep(5)
-        machine.reset()
 
 main()
