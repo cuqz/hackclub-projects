@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.exe
+*.db
+*.db-shm
+*.db-wal
+.vite/
