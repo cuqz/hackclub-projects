@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.exe
+*.db
+*.test
+.hivemind/
+*.db-shm
+*.db-wal
+*.db

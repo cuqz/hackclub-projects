@@ -1,0 +1,102 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-team-os"
+version = "1.10.2"
+description = "Self-driving AI company OS — turn Claude Code into a persistent, self-managing dev team"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "CronusL-1141" },
+]
+keywords = ["claude-code", "mcp", "ai-agent", "team-os", "autonomous", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    # API + MCP (required for OS to function)
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "fastmcp>=3.0.0",
+    # CLI
+    "typer[all]>=0.15.0",
+    "rich>=13.0.0",
+    # Config
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    # Storage
+    "aiosqlite>=0.20.0",
+    "sqlalchemy>=2.0",
+    "alembic>=1.14.0",
+    # SQLAlchemy async 必需 greenlet，但其自带平台标记不含 Apple Silicon macOS
+    # （platform_machine=="arm64" 不在 aarch64/x86_64/... 列表）——漏装则 async
+    # 引擎首次连接即 ValueError，故显式声明保证全平台可用。
+    "greenlet>=3.0",
+    # Async
+    "anyio>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/CronusL-1141/AI-company"
+Repository = "https://github.com/CronusL-1141/AI-company"
+Issues = "https://github.com/CronusL-1141/AI-company/issues"
+
+[project.optional-dependencies]
+# LangGraph orchestration runtime — only needed by the legacy `aiteam task run`
+# StateGraph execution path (orchestrator/). The API/MCP/Dashboard observability
+# layer does NOT require these. Install with: pip install 'ai-team-os[langgraph]'
+langgraph = [
+    "langgraph>=0.3.0",
+    "langchain-anthropic>=0.3.0",
+    "langchain-core>=0.3.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[project.scripts]
+aiteam = "aiteam.cli.app:app"
+ai-team-os-serve = "aiteam.mcp.entry:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aiteam"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Data/config files with long Chinese string literals
+"src/aiteam/api/routes/system.py" = ["E501"]
+"src/aiteam/meeting/templates.py" = ["E501"]
+# Hook scripts with long Chinese prompt strings
+"plugin/hooks/*.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# src layout: make `import aiteam` work without pip install -e . (CI runs on bare deps)
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true

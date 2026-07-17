@@ -25,3 +25,11 @@ wakatime.db
 .wakatime-project
 tracker.py
 **/tracker.py
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.venv/
+*.exe
+*.log
+.env

@@ -1,0 +1,26 @@
+{
+  "name": "ai-team-os",
+  "owner": {
+    "name": "CronusL-1141",
+    "url": "https://github.com/CronusL-1141"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Self-driving AI company OS — turn Claude Code into a persistent, self-managing dev team"
+  },
+  "plugins": [
+    {
+      "name": "ai-team-os",
+      "description": "Agent team coordination with task wall, meetings, pipeline orchestration, and behavioral enforcement",
+      "version": "1.10.2",
+      "category": "productivity",
+      "author": {
+        "name": "CronusL-1141"
+      },
+      "homepage": "https://github.com/CronusL-1141/AI-company",
+      "repository": "https://github.com/CronusL-1141/AI-company",
+      "license": "MIT",
+      "source": "./plugin"
+    }
+  ]
+}

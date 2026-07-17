@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+@theme {
+  --font-body: "Inter", sans-serif;
+  --font-display: "Instrument Serif", serif;
+}
+
+:root {
+  --bg: 240 10% 3.9%;
+  --surface: 240 10% 8.5%;
+  --surface-hover: 240 10% 12%;
+  --text: 0 0% 96%;
+  --text-secondary: 0 0% 65%;
+  --muted: 0 0% 45%;
+  --stroke: 240 6% 15%;
+  --accent: 210 50% 65%;
+  --accent-hover: 210 50% 55%;
+  --accent-soft: 210 50% 65% / 0.1;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+  --glass: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.06);
+}
+
+::selection {
+  background: hsl(var(--accent) / 0.25);
+  color: hsl(var(--text));
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Glass card base */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid var(--glass-border);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(210 50% 65%), hsl(270 50% 60%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* React Flow overrides */
+.react-flow__background { background: hsl(var(--bg)) !important; }
+.react-flow__controls-button {
+  background: hsl(var(--surface)) !important;
+  border: 1px solid hsl(var(--stroke)) !important;
+  color: hsl(var(--text-secondary)) !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+.react-flow__controls-button:hover {
+  background: hsl(var(--surface-hover)) !important;
+}
+.react-flow__edge-path {
+  stroke: rgba(255,255,255,0.12) !important;
+  stroke-width: 2 !important;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: hsl(var(--accent)) !important;
+}
+.react-flow__minimap { 
+  background: hsl(var(--surface)) !important;
+  border-radius: 12px !important;
+  border: 1px solid hsl(var(--stroke)) !important;
+  overflow: hidden !important;
+}
+.react-flow__minimap-mask { fill: rgba(0,0,0,0.85) !important; }
+.react-flow__minimap-node { fill: hsl(var(--surface-hover)) !important; stroke: hsl(var(--stroke)) !important; }
+.react-flow__node.selected { filter: drop-shadow(0 0 12px hsl(var(--accent) / 0.2)); }
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}

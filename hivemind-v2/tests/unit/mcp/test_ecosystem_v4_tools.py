@@ -1,0 +1,331 @@
+"""Tests for v1.6.0 P0.3 ecosystem MCP tools (5 wrappers).
+
+Covers:
+- ecosystem_quick_setup
+- ecosystem_data_source_create
+- ecosystem_scan_profile_update
+- ecosystem_index_update
+- ecosystem_index_diff_latest
+
+All tests mock _api_call so no live backend is required.
+"""
+
+from __future__ import annotations
+
+from unittest.mock import patch
+
+import aiteam.mcp.tools.ecosystem as eco
+
+
+class _ToolCapture:
+    """Capture @mcp.tool() registered functions."""
+
+    def __init__(self) -> None:
+        self.tools: dict = {}
+
+    def tool(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        def decorator(fn):  # type: ignore[no-untyped-def]
+            self.tools[fn.__name__] = fn
+            return fn
+
+        return decorator
+
+
+_capture = _ToolCapture()
+eco.register(_capture)
+
+_quick_setup = _capture.tools["ecosystem_quick_setup"]
+_data_source_create = _capture.tools["ecosystem_data_source_create"]
+_scan_profile_update = _capture.tools["ecosystem_scan_profile_update"]
+_index_update = _capture.tools["ecosystem_index_update"]
+_index_diff_latest = _capture.tools["ecosystem_index_diff_latest"]
+
+
+# ============================================================
+# ecosystem_quick_setup
+# ============================================================
+
+
+class TestQuickSetup:
+    def test_happy_path_multi_source_default_profile(self) -> None:
+        """Multiple sources + use_defaults=True should POST to /quick_setup with all fields."""
+        fake = {
+            "success": True,
+            "data_source_ids": ["ds-1", "ds-2"],
+            "scan_profile_id": "sp-1",
+            "scan_profile_version": 1,
+            "next_step": "Call POST /api/ecosystem/index_update?dry_run=true to preview changes",
+        }
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            result = _quick_setup(
+                sources=["github", "huggingface"],
+                queries=["mcp-server", "claude-agent"],
+            )
+
+        # Verify request shape
+        assert mock_api.call_args[0][0] == "POST"
+        assert mock_api.call_args[0][1] == "/api/ecosystem/quick_setup"
+        body = mock_api.call_args[0][2]
+        assert body["sources"] == ["github", "huggingface"]
+        assert body["queries"] == ["mcp-server", "claude-agent"]
+        assert body["use_defaults"] is True
+        assert "custom_profile" not in body  # only when explicitly passed
+
+        # Verify response shape
+        assert result["success"] is True
+        assert result["data_sources_created"] == 2
+        assert result["data_source_ids"] == ["ds-1", "ds-2"]
+        assert result["scan_profile_id"] == "sp-1"
+        assert result["scan_profile_version"] == 1
+        assert result["profile_created"] is True
+        assert result["next_action"] == "call ecosystem_index_update(dry_run=True)"
+
+    def test_default_sources_is_github_when_empty(self) -> None:
+        """Empty/None sources defaults to ['github']."""
+        fake = {
+            "success": True,
+            "data_source_ids": ["ds-1"],
+            "scan_profile_id": "sp-1",
+            "scan_profile_version": 1,
+        }
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            _quick_setup()
+        body = mock_api.call_args[0][2]
+        assert body["sources"] == ["github"]
+        assert body["queries"] == []
+
+    def test_passes_custom_profile_when_provided(self) -> None:
+        """custom_profile dict should appear in body when use_defaults=False."""
+        custom = {"min_popularity_floor": {"github": 100}}
+        fake = {
+            "success": True,
+            "data_source_ids": ["ds-1"],
+            "scan_profile_id": "sp-1",
+            "scan_profile_version": 1,
+        }
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            _quick_setup(
+                sources=["github"],
+                use_defaults=False,
+                custom_profile=custom,
+            )
+        body = mock_api.call_args[0][2]
+        assert body["use_defaults"] is False
+        assert body["custom_profile"] == custom
+
+    def test_api_unavailable_returns_error_dict(self) -> None:
+        with patch.object(eco, "_api_call", return_value=None):
+            result = _quick_setup(sources=["github"])
+        assert result == {"success": False, "error": "api_unavailable"}
+
+    def test_api_returns_failure_passes_through(self) -> None:
+        failure = {"success": False, "error": "HTTP 422", "detail": "Invalid kind"}
+        with patch.object(eco, "_api_call", return_value=failure):
+            result = _quick_setup(sources=["unknown-kind"])
+        assert result["success"] is False
+        assert "422" in result["error"]
+
+
+# ============================================================
+# ecosystem_data_source_create
+# ============================================================
+
+
+class TestDataSourceCreate:
+    # v1.6.1 Phase 2: ecosystem_data_source_create is a deprecated stub (multi-source denied).
+    # All calls return {success: True, deprecated: True} without hitting the API.
+
+    def test_posts_to_data_sources_with_kind_name_config(self) -> None:
+        result = _data_source_create(
+            kind="github",
+            name="github default",
+            config={"queries": ["claude-code"]},
+        )
+        assert result["success"] is True
+        assert result["deprecated"] is True
+        assert "DEPRECATED" in result["message"]
+
+    def test_config_defaults_to_empty_dict(self) -> None:
+        result = _data_source_create(kind="npm", name="npm registry")
+        assert result["success"] is True
+        assert result["deprecated"] is True
+
+    def test_api_unavailable_returns_error_dict(self) -> None:
+        # Stub never fails — always returns deprecated notice
+        result = _data_source_create(kind="github", name="x")
+        assert result["success"] is True
+        assert result["deprecated"] is True
+
+    def test_invalid_kind_passes_through_422(self) -> None:
+        # Stub never validates kind — always returns deprecated notice
+        result = _data_source_create(kind="bogus", name="x")
+        assert result["success"] is True
+        assert result["deprecated"] is True
+
+
+# ============================================================
+# ecosystem_scan_profile_update
+# ============================================================
+
+
+class TestScanProfileUpdate:
+    # v1.6.1 Phase 2: ecosystem_scan_profile_update is a deprecated stub.
+    # alert_thresholds.max_new_per_scan migrated to settings.alert_max_new_per_scan.
+    # All calls return {success: True, deprecated: True} without hitting the API.
+
+    def test_puts_full_profile_to_scan_profile(self) -> None:
+        profile = {
+            "min_popularity_floor": {"github": 50, "huggingface": 100},
+            "language_allowlist": ["Python", "TypeScript"],
+        }
+        result = _scan_profile_update(profile=profile)
+        assert result["success"] is True
+        assert result["deprecated"] is True
+        assert "DEPRECATED" in result["message"]
+
+    def test_api_unavailable_returns_error_dict(self) -> None:
+        # Stub never fails — always returns deprecated notice
+        result = _scan_profile_update(profile={})
+        assert result["success"] is True
+        assert result["deprecated"] is True
+
+
+# ============================================================
+# ecosystem_index_update
+# ============================================================
+
+
+class TestIndexUpdate:
+    def test_dry_run_true_is_default(self) -> None:
+        """Calling without args should send dry_run=True."""
+        fake = {
+            "success": True,
+            "dry_run": True,
+            "missing_setup": [],
+            "data_sources": 1,
+            "scan_profile_version": 1,
+        }
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            result = _index_update()
+
+        assert mock_api.call_args[0][0] == "POST"
+        assert mock_api.call_args[0][1] == "/api/ecosystem/index_update"
+        body = mock_api.call_args[0][2]
+        assert body == {"dry_run": True}
+        assert result["success"] is True
+
+    def test_dry_run_false_sent_when_explicit(self) -> None:
+        fake = {"success": True, "dry_run": False, "missing_setup": []}
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            _index_update(dry_run=False)
+        body = mock_api.call_args[0][2]
+        assert body == {"dry_run": False}
+
+    def test_missing_setup_returned_as_is(self) -> None:
+        """Backend returns success=False with missing_setup list — wrapper passes through."""
+        fake = {
+            "success": False,
+            "dry_run": True,
+            "missing_setup": ["data_source", "scan_profile"],
+            "message": "Setup incomplete. Call POST /api/ecosystem/quick_setup first ...",
+        }
+        with patch.object(eco, "_api_call", return_value=fake):
+            result = _index_update(dry_run=True)
+        assert result["missing_setup"] == ["data_source", "scan_profile"]
+        assert result["success"] is False
+
+    def test_api_unavailable_returns_error_dict(self) -> None:
+        with patch.object(eco, "_api_call", return_value=None):
+            result = _index_update()
+        assert result == {"success": False, "error": "api_unavailable"}
+
+
+# ============================================================
+# ecosystem_index_diff_latest
+# ============================================================
+
+
+class TestIndexDiffLatest:
+    def test_404_returns_p04_stub_signal(self) -> None:
+        """HTTP 404 (endpoint not yet built) must be mapped to a stable stub message."""
+        failure = {
+            "success": False,
+            "error": "HTTP 404: Not Found",
+            "detail": "endpoint not found",
+        }
+        with patch.object(eco, "_api_call", return_value=failure):
+            result = _index_diff_latest()
+        assert result["success"] is False
+        assert result["error"] == "P0.4 will implement"
+
+    def test_happy_path_passes_through(self) -> None:
+        """When P0.4 ships, the wrapper should pass the diff payload through."""
+        fake = {
+            "success": True,
+            "index_diff": {
+                "id": "id-1",
+                "project_id": "p-1",
+                "summary": {"added": 5, "removed": 1, "updated": 3},
+            },
+        }
+        with patch.object(eco, "_api_call", return_value=fake) as mock_api:
+            result = _index_diff_latest()
+        assert mock_api.call_args[0][0] == "GET"
+        assert mock_api.call_args[0][1] == "/api/ecosystem/index_diffs/latest"
+        assert result["success"] is True
+        assert result["index_diff"]["summary"]["added"] == 5
+
+    def test_api_unavailable_returns_error_dict(self) -> None:
+        with patch.object(eco, "_api_call", return_value=None):
+            result = _index_diff_latest()
+        assert result == {"success": False, "error": "api_unavailable"}
+
+    def test_other_failure_passes_through(self) -> None:
+        """500-style errors must NOT be confused with the 404 P0.4 stub signal."""
+        failure = {
+            "success": False,
+            "error": "HTTP 500: Internal Server Error",
+            "detail": "boom",
+        }
+        with patch.object(eco, "_api_call", return_value=failure):
+            result = _index_diff_latest()
+        assert result["success"] is False
+        assert result["error"] == "HTTP 500: Internal Server Error"
+
+
+# ============================================================
+# Project header propagation (smoke check across all 5 tools)
+# ============================================================
+
+
+class TestProjectHeaderPropagation:
+    """Every P0.3 tool must pass extra_headers (X-Project-Id) to _api_call."""
+
+    def _assert_called_with_headers(self, mock_api) -> None:
+        kwargs = mock_api.call_args.kwargs
+        assert "extra_headers" in kwargs
+
+    def test_quick_setup_passes_headers(self) -> None:
+        with patch.object(eco, "_api_call", return_value={"success": True, "data_source_ids": []}) as mock_api:
+            _quick_setup(sources=["github"])
+        self._assert_called_with_headers(mock_api)
+
+    def test_data_source_create_passes_headers(self) -> None:
+        # v1.6.1 Phase 2: deprecated stub — does not call _api_call, returns immediately.
+        result = _data_source_create(kind="github", name="x")
+        assert result["deprecated"] is True
+
+    def test_scan_profile_update_passes_headers(self) -> None:
+        # v1.6.1 Phase 2: deprecated stub — does not call _api_call, returns immediately.
+        result = _scan_profile_update(profile={})
+        assert result["deprecated"] is True
+
+    def test_index_update_passes_headers(self) -> None:
+        with patch.object(eco, "_api_call", return_value={"success": True}) as mock_api:
+            _index_update()
+        self._assert_called_with_headers(mock_api)
+
+    def test_index_diff_latest_passes_headers(self) -> None:
+        with patch.object(eco, "_api_call", return_value={"success": True}) as mock_api:
+            _index_diff_latest()
+        self._assert_called_with_headers(mock_api)

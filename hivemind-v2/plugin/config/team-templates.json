@@ -1,0 +1,55 @@
+{
+  "templates": [
+    {
+      "id": "fullstack",
+      "name": "Full-Stack Dev Team",
+      "description": "Frontend + backend + QA for standard development work",
+      "members": [
+        {"name": "frontend-dev", "role": "frontend-developer"},
+        {"name": "backend-dev", "role": "backend-architect"},
+        {"name": "qa-engineer", "role": "testing-qa-engineer"},
+        {"name": "bug-fixer", "role": "testing-bug-fixer"}
+      ]
+    },
+    {
+      "id": "research",
+      "name": "Research Team",
+      "description": "Multi-angle technical research and architecture design",
+      "members": [
+        {"name": "architect", "role": "software-architect"},
+        {"name": "ai-engineer", "role": "ai-engineer"},
+        {"name": "tech-writer", "role": "technical-writer"},
+        {"name": "qa-engineer", "role": "testing-qa-engineer"}
+      ]
+    },
+    {
+      "id": "bugfix",
+      "name": "Bug Fix Team",
+      "description": "Focused problem diagnosis and resolution",
+      "members": [
+        {"name": "bug-fixer", "role": "testing-bug-fixer"},
+        {"name": "qa-engineer", "role": "testing-qa-engineer"},
+        {"name": "code-reviewer", "role": "code-reviewer"}
+      ]
+    },
+    {
+      "id": "devops",
+      "name": "DevOps Team",
+      "description": "CI/CD, deployment, infrastructure, and reliability",
+      "members": [
+        {"name": "devops", "role": "engineering-devops-automator"},
+        {"name": "sre", "role": "sre"},
+        {"name": "security", "role": "security-engineer"}
+      ]
+    },
+    {
+      "id": "minimal",
+      "name": "Minimal Team",
+      "description": "QA + Bug-fixer only, the permanent core",
+      "members": [
+        {"name": "qa-engineer", "role": "testing-qa-engineer"},
+        {"name": "bug-fixer", "role": "testing-bug-fixer"}
+      ]
+    }
+  ]
+}
